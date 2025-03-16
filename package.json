@@ -1,0 +1,29 @@
+{
+	"name": "grix-mcp",
+	"version": "1.0.0",
+	"type": "module",
+	"main": "build/index.js",
+	"scripts": {
+		"build": "tsc",
+		"start": "node build/index.js",
+		"dev": "ts-node-esm src/index.ts",
+		"clean": "rm -rf build"
+	},
+	"files": [
+		"build"
+	],
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "This is a Model Context Protocol (MCP) server implementation that integrates with the GRIX data API.",
+		"@types/node": "^20.11.24",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.3.3"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.7.0",
+		"axios": "^1.6.7",
+		"dotenv": "^16.4.7",
+		"zod": "^3.24.2"
+	}
+}

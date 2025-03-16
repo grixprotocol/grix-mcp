@@ -1,0 +1,12 @@
+{
+	"mcpServers": {
+		"grix-mcp": {
+			"command": "node",
+			"env": {
+				"GRIX_API_KEY": "your_grix_api_key_here",
+				"NODE_ENV": "production"
+			},
+			"args": ["build/index.js"]
+		}
+	}
+}

@@ -1,0 +1,11 @@
+
+# package directories
+node_modules
+
+
+# esbuild directories
+.esbuild
+
+lib
+.env
+.build
