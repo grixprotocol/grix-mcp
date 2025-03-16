@@ -4,7 +4,7 @@
 			"command": "node",
 			"env": {
 				"GRIX_API_KEY": "your_grix_api_key_here",
-				"NODE_ENV": "production"
+				"OPENAI_API_KEY": "your_openai_api_key_here"
 			},
 			"args": ["build/index.js"]
 		}
