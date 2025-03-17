@@ -1,6 +1,6 @@
 {
 	"name": "@grixprotocol/grix-mcp",
-	"version": "0.0.2",
+	"version": "0.0.16",
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
@@ -9,9 +9,6 @@
 		"dev": "ts-node-esm src/index.ts",
 		"clean": "rm -rf build"
 	},
-	"files": [
-		"build"
-	],
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
@@ -28,5 +25,14 @@
 		"axios": "^1.6.7",
 		"dotenv": "^16.4.7",
 		"zod": "^3.24.2"
-	}
+	},
+	"devDependencies": {
+		"@types/node": "^22.13.10"
+	},
+	"bin": {
+		"grix-mcp": "./build/index.js"
+	},
+	"files": [
+		"build"
+	]
 }

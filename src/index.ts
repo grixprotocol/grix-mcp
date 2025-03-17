@@ -1,17 +1,19 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+#!/usr/bin/env node
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import axios from "axios";
 import dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
 
-// API Configuration
-const API_BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev";
-const DEFAULT_PROTOCOLS = ["derive", "aevo", "premia", "moby", "ithaca", "zomma", "deribit"];
+const API_KEY_DEMO = "gjOH22LyxtKxPax5ALRx46i5rHv9B8Ya1WnD0ma3";
+const BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev/elizatradeboard";
+const PROTOCOLS = "derive,aevo,premia,moby,ithaca,zomma,deribit";
+const CACHE_TTL = 30000; // 30 seconds cache
 
-// Type definitions for API response
+// Type definitions
 interface OptionData {
 	optionId: number;
 	symbol: string;
@@ -25,116 +27,206 @@ interface OptionData {
 }
 
 // Cache configuration
-const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 let optionsCache: {
 	lastUpdate: number;
-	data: OptionData[] | null;
+	data: Record<string, OptionData[]>;
 } = {
 	lastUpdate: 0,
-	data: null,
+	data: {},
 };
 
-function shouldRefreshCache(): boolean {
-	return Date.now() - optionsCache.lastUpdate > CACHE_EXPIRY_MS;
+// Create the MCP server with the new Server class
+const server = new Server(
+	{
+		name: "GRIX MCP",
+		version: "1.1.0",
+	},
+	{
+		capabilities: {
+			tools: {},
+		},
+	}
+);
+
+async function fetchOptionsData(
+	asset: string,
+	optionType: string,
+	positionType: string
+): Promise<OptionData[]> {
+	const cacheKey = `${asset}-${optionType}-${positionType}`;
+	const now = Date.now();
+
+	if (optionsCache.data[cacheKey] && now - optionsCache.lastUpdate < CACHE_TTL) {
+		return optionsCache.data[cacheKey];
+	}
+
+	try {
+		const response = await axios.get(BASE_URL, {
+			params: {
+				positionType: positionType.toLowerCase(),
+				optionType: optionType.toLowerCase(),
+				asset: asset,
+				protocols: PROTOCOLS,
+			},
+			headers: {
+				"x-api-key": API_KEY_DEMO,
+			},
+		});
+
+		if (!response.data || !Array.isArray(response.data)) {
+			throw new Error(
+				`Invalid API response format. Response: ${JSON.stringify(response.data)}`
+			);
+		}
+
+		const sortedData = response.data
+			.sort((a: OptionData, b: OptionData) => a.strike - b.strike)
+			.slice(0, 10);
+
+		optionsCache.lastUpdate = now;
+		optionsCache.data[cacheKey] = sortedData;
+		return sortedData;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			const params = new URLSearchParams({
+				positionType: positionType.toLowerCase(),
+				optionType: optionType.toLowerCase(),
+				asset: asset,
+				protocols: PROTOCOLS,
+			});
+			const requestUrl = `${BASE_URL}?${params.toString()}`;
+
+			const errorDetails = {
+				url: requestUrl,
+				status: error.response?.status,
+				statusText: error.response?.statusText,
+				responseData: error.response?.data,
+				message: error.message,
+			};
+
+			throw new Error(`API Request Failed: ${JSON.stringify(errorDetails, null, 2)}`);
+		}
+		throw error;
+	}
 }
 
-// Create server instance
-const server = new McpServer({
-	name: "grix-mcp",
-	version: "1.0.0",
+// Define tools using ListToolsRequestSchema
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+	return {
+		tools: [
+			{
+				name: "options",
+				description: "Get options data from Grix",
+				inputSchema: {
+					type: "object",
+					properties: {
+						asset: { type: "string", enum: ["BTC", "ETH"], default: "BTC" },
+						optionType: { type: "string", enum: ["call", "put"], default: "call" },
+						positionType: { type: "string", enum: ["long", "short"], default: "long" },
+					},
+				},
+			},
+		],
+	};
 });
 
-// Register options tool with enhanced functionality
-server.tool(
-	"options",
-	"Get options data from Grix",
-	{
-		asset: z.enum(["BTC", "ETH"]).optional().default("BTC"),
-		optionType: z.enum(["call", "put"]).optional().default("call"),
-		positionType: z.enum(["long", "short"]).optional().default("long"),
-	},
-	async (request) => {
+// Handle tool calls using CallToolRequestSchema
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+	const { name, arguments: args } = request.params;
+
+	if (name === "options") {
 		try {
-			const asset = request.asset || "BTC";
-			const optionType = request.optionType || "call";
-			const positionType = request.positionType || "long";
+			const asset = (args?.asset as string) || "BTC";
+			const optionType = (args?.optionType as string) || "call";
+			const positionType = (args?.positionType as string) || "long";
 
-			// Fetch and cache options data if needed
-			if (shouldRefreshCache()) {
-				console.error(`📡 Fetching options data for asset: ${asset}`);
+			const data = await fetchOptionsData(asset, optionType, positionType);
 
-				const response = await axios.get(`${API_BASE_URL}/elizatradeboard`, {
-					headers: {
-						"x-api-key": process.env.GRIX_API_KEY || "",
-					},
-					params: {
-						asset: asset.toUpperCase(),
-						optionType,
-						positionType,
-						protocols: DEFAULT_PROTOCOLS.join(","),
-					},
-				});
-
-				// Ensure the response data is an array
-				const optionsData = Array.isArray(response.data) ? response.data : [];
-
-				// Sort options by strike price for better readability
-				const sortedData = optionsData.sort((a, b) => a.strike - b.strike);
-
-				optionsCache = {
-					lastUpdate: Date.now(),
-					data: sortedData,
+			if (!data || data.length === 0) {
+				return {
+					content: [
+						{
+							type: "text",
+							text: "No options data available for the specified parameters.",
+						},
+					],
 				};
 			}
 
-			// Format the response for better readability
-			const formattedData = optionsCache.data?.map((option) => ({
+			const formattedData = data.map((option) => ({
 				id: option.optionId,
 				symbol: option.symbol,
-				type: option.type,
-				expiry: option.expiry,
-				strike: option.strike,
-				protocol: option.protocol,
-				price: option.contractPrice,
-				amount: option.availableAmount,
+				strike: `$${option.strike.toLocaleString()}`,
+				type: option.type.toLowerCase(),
+				expiry: new Date(option.expiry).toLocaleDateString(),
+				protocol: option.protocol.toLowerCase(),
+				price: option.contractPrice.toFixed(4),
+				amount: parseFloat(option.availableAmount).toFixed(4),
 				market: option.marketName,
 			}));
+
+			const formattedOutput = formattedData
+				.map(
+					(option, index) =>
+						`Option ${index + 1}:\n` +
+						`  Symbol: ${option.symbol}\n` +
+						`  Strike: ${option.strike}\n` +
+						`  Type: ${option.type}\n` +
+						`  Expiry: ${option.expiry}\n` +
+						`  Protocol: ${option.protocol}\n` +
+						`  Price: ${option.price}\n` +
+						`  Amount: ${option.amount}\n` +
+						`  Market: ${option.market}\n`
+				)
+				.join("\n");
 
 			return {
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify(formattedData || [], null, 2),
+						text: formattedOutput,
 					},
 				],
 			};
 		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-			console.error("Error fetching options data:", error);
 			return {
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify({
-							error: "Failed to fetch options data",
-							details: errorMessage,
-						}),
+						text: error instanceof Error ? error.message : "Unknown error occurred",
 					},
 				],
 			};
 		}
 	}
-);
+
+	throw new Error(`Unknown tool: ${name}`);
+});
 
 // Start the server
 async function main() {
-	const transport = new StdioServerTransport();
-	await server.connect(transport);
-  
-	console.error("Grix MCP Server running on stdio");
+	try {
+		console.error("Initializing Grix MCP Server...");
+		const transport = new StdioServerTransport();
+		await server.connect(transport);
+		console.error("Grix MCP Server running on stdio");
+	} catch (error) {
+		console.error("Fatal error in main():", error);
+		if (error instanceof Error) {
+			console.error("Error details:", error.message);
+			console.error("Stack trace:", error.stack);
+		}
+		process.exit(1);
+	}
 }
 
+// Add unhandled rejection handler
+process.on("unhandledRejection", (error: unknown) => {
+	console.error("Unhandled rejection:", error);
+	process.exit(1);
+});
+
 main().catch((error) => {
-	console.error("Fatal error in main():", error);
+	console.error("Fatal error:", error);
 	process.exit(1);
 });
