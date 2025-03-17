@@ -1,18 +1,13 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import axios from "axios";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+
 import dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
 
-// Constants
-const API_BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev";
-const DEFAULT_PROTOCOLS = ["derive", "aevo", "premia", "moby", "ithaca", "zomma", "deribit"];
-const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
-const KEY_DEMO = "YoQicEDVZP1ecpB3fqZ4U8y3MHCs1C6BaBPGpGTP";
 // Type definitions
 interface OptionData {
 	optionId: number;
@@ -35,15 +30,18 @@ let optionsCache: {
 	data: null,
 };
 
-function shouldRefreshCache(): boolean {
-	return Date.now() - optionsCache.lastUpdate > CACHE_EXPIRY_MS;
-}
-
-// Create the MCP server
-const server = new McpServer({
-	name: "Grix MCP",
-	version: "1.1.0",
-});
+// Create the MCP server with the new Server class
+const server = new Server(
+	{
+		name: "Grix MCP",
+		version: "1.1.0",
+	},
+	{
+		capabilities: {
+			tools: {},
+		},
+	}
+);
 
 // Sample hardcoded options data
 const SAMPLE_OPTIONS_DATA: OptionData[] = [
@@ -82,16 +80,31 @@ const SAMPLE_OPTIONS_DATA: OptionData[] = [
 	},
 ];
 
-// Options Tool
-server.tool(
-	"options",
-	"Get options data from Grix",
-	{
-		asset: z.enum(["BTC", "ETH"]).optional().default("BTC"),
-		optionType: z.enum(["call", "put"]).optional().default("call"),
-		positionType: z.enum(["long", "short"]).optional().default("long"),
-	},
-	async () => {
+// Define tools using ListToolsRequestSchema
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+	return {
+		tools: [
+			{
+				name: "options",
+				description: "Get options data from Grix",
+				inputSchema: {
+					type: "object",
+					properties: {
+						asset: { type: "string", enum: ["BTC", "ETH"], default: "BTC" },
+						optionType: { type: "string", enum: ["call", "put"], default: "call" },
+						positionType: { type: "string", enum: ["long", "short"], default: "long" },
+					},
+				},
+			},
+		],
+	};
+});
+
+// Handle tool calls using CallToolRequestSchema
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+	const { name, arguments: args } = request.params;
+
+	if (name === "options") {
 		try {
 			const formattedData = SAMPLE_OPTIONS_DATA.map((option) => ({
 				id: option.optionId,
@@ -128,7 +141,9 @@ server.tool(
 			};
 		}
 	}
-);
+
+	throw new Error(`Unknown tool: ${name}`);
+});
 
 // Start the server
 async function main() {

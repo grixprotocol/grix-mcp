@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
@@ -15,13 +15,14 @@ let optionsCache = {
     lastUpdate: 0,
     data: null,
 };
-function shouldRefreshCache() {
-    return Date.now() - optionsCache.lastUpdate > CACHE_EXPIRY_MS;
-}
-// Create the MCP server
-const server = new McpServer({
+// Create the MCP server with the new Server class
+const server = new Server({
     name: "Grix MCP",
     version: "1.1.0",
+}, {
+    capabilities: {
+        tools: {},
+    },
 });
 // Sample hardcoded options data
 const SAMPLE_OPTIONS_DATA = [
@@ -59,47 +60,66 @@ const SAMPLE_OPTIONS_DATA = [
         availableAmount: "1.0",
     },
 ];
-// Options Tool
-server.tool("options", "Get options data from Grix", {
-    asset: z.enum(["BTC", "ETH"]).optional().default("BTC"),
-    optionType: z.enum(["call", "put"]).optional().default("call"),
-    positionType: z.enum(["long", "short"]).optional().default("long"),
-}, async () => {
-    try {
-        const formattedData = SAMPLE_OPTIONS_DATA.map((option) => ({
-            id: option.optionId,
-            symbol: option.symbol,
-            type: option.type,
-            expiry: option.expiry,
-            strike: option.strike,
-            protocol: option.protocol,
-            price: option.contractPrice,
-            amount: option.availableAmount,
-            market: option.marketName,
-        }));
-        return {
-            content: [
-                {
-                    type: "text",
-                    text: JSON.stringify(formattedData, null, 2),
+// Define tools using ListToolsRequestSchema
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+        tools: [
+            {
+                name: "options",
+                description: "Get options data from Grix",
+                inputSchema: {
+                    type: "object",
+                    properties: {
+                        asset: { type: "string", enum: ["BTC", "ETH"], default: "BTC" },
+                        optionType: { type: "string", enum: ["call", "put"], default: "call" },
+                        positionType: { type: "string", enum: ["long", "short"], default: "long" },
+                    },
                 },
-            ],
-        };
+            },
+        ],
+    };
+});
+// Handle tool calls using CallToolRequestSchema
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name, arguments: args } = request.params;
+    if (name === "options") {
+        try {
+            const formattedData = SAMPLE_OPTIONS_DATA.map((option) => ({
+                id: option.optionId,
+                symbol: option.symbol,
+                type: option.type,
+                expiry: option.expiry,
+                strike: option.strike,
+                protocol: option.protocol,
+                price: option.contractPrice,
+                amount: option.availableAmount,
+                market: option.marketName,
+            }));
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: JSON.stringify(formattedData, null, 2),
+                    },
+                ],
+            };
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: JSON.stringify({
+                            error: "Failed to process options data",
+                            details: errorMessage,
+                        }),
+                    },
+                ],
+            };
+        }
     }
-    catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-        return {
-            content: [
-                {
-                    type: "text",
-                    text: JSON.stringify({
-                        error: "Failed to process options data",
-                        details: errorMessage,
-                    }),
-                },
-            ],
-        };
-    }
+    throw new Error(`Unknown tool: ${name}`);
 });
 // Start the server
 async function main() {
