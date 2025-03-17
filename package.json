@@ -1,6 +1,6 @@
 {
 	"name": "@grixprotocol/grix-mcp",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
@@ -9,9 +9,6 @@
 		"dev": "ts-node-esm src/index.ts",
 		"clean": "rm -rf build"
 	},
-	"files": [
-		"build"
-	],
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
