@@ -12,7 +12,7 @@ dotenv.config();
 const API_BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev";
 const DEFAULT_PROTOCOLS = ["derive", "aevo", "premia", "moby", "ithaca", "zomma", "deribit"];
 const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
-
+const KEY_DEMO = "YoQicEDVZP1ecpB3fqZ4U8y3MHCs1C6BaBPGpGTP";
 // Type definitions
 interface OptionData {
 	optionId: number;
@@ -65,7 +65,7 @@ server.tool(
 
 				const response = await axios.get(`${API_BASE_URL}/elizatradeboard`, {
 					headers: {
-						"x-api-key": process.env.GRIX_API_KEY || "",
+						"x-api-key": KEY_DEMO,
 					},
 					params: {
 						asset: asset.toUpperCase(),
