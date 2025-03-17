@@ -1,6 +1,6 @@
 {
 	"name": "@grixprotocol/grix-mcp",
-	"version": "0.0.5",
+	"version": "0.0.7",
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
@@ -28,5 +28,11 @@
 	},
 	"devDependencies": {
 		"@types/node": "^22.13.10"
-	}
+	},
+	"bin": {
+		"grix-mcp": "./build/index.js"
+	},
+	"files": [
+		"build"
+	]
 }

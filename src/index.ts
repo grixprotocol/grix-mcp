@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -124,8 +125,6 @@ server.tool(
 // Start the server
 async function main() {
 	try {
-
-
 		console.error("Initializing Grix MCP Server...");
 		const transport = new StdioServerTransport();
 		await server.connect(transport);
