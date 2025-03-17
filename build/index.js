@@ -5,11 +5,11 @@ import axios from "axios";
 import dotenv from "dotenv";
 // Load environment variables
 dotenv.config();
-// API Configuration
+// Constants
 const API_BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev";
 const DEFAULT_PROTOCOLS = ["derive", "aevo", "premia", "moby", "ithaca", "zomma", "deribit"];
-// Cache configuration
 const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+// Cache configuration
 let optionsCache = {
     lastUpdate: 0,
     data: null,
@@ -17,12 +17,12 @@ let optionsCache = {
 function shouldRefreshCache() {
     return Date.now() - optionsCache.lastUpdate > CACHE_EXPIRY_MS;
 }
-// Create server instance
+// Create the MCP server
 const server = new McpServer({
-    name: "grix-mcp",
-    version: "1.0.0",
+    name: "Grix MCP",
+    version: "1.1.0",
 });
-// Register options tool with enhanced functionality
+// Options Tool
 server.tool("options", "Get options data from Grix", {
     asset: z.enum(["BTC", "ETH"]).optional().default("BTC"),
     optionType: z.enum(["call", "put"]).optional().default("call"),
@@ -32,7 +32,6 @@ server.tool("options", "Get options data from Grix", {
         const asset = request.asset || "BTC";
         const optionType = request.optionType || "call";
         const positionType = request.positionType || "long";
-        // Fetch and cache options data if needed
         if (shouldRefreshCache()) {
             console.error(`📡 Fetching options data for asset: ${asset}`);
             const response = await axios.get(`${API_BASE_URL}/elizatradeboard`, {
@@ -46,16 +45,13 @@ server.tool("options", "Get options data from Grix", {
                     protocols: DEFAULT_PROTOCOLS.join(","),
                 },
             });
-            // Ensure the response data is an array
             const optionsData = Array.isArray(response.data) ? response.data : [];
-            // Sort options by strike price for better readability
             const sortedData = optionsData.sort((a, b) => a.strike - b.strike);
             optionsCache = {
                 lastUpdate: Date.now(),
                 data: sortedData,
             };
         }
-        // Format the response for better readability
         const formattedData = optionsCache.data?.map((option) => ({
             id: option.optionId,
             symbol: option.symbol,
@@ -94,11 +90,31 @@ server.tool("options", "Get options data from Grix", {
 });
 // Start the server
 async function main() {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error("Grix MCP Server running on stdio");
+    try {
+        // Validate API key
+        // if (!process.env.GRIX_API_KEY) {
+        // 	throw new Error("GRIX_API_KEY environment variable is not set");
+        // }
+        console.error("Initializing Grix MCP Server...");
+        const transport = new StdioServerTransport();
+        await server.connect(transport);
+        console.error("Grix MCP Server running on stdio");
+    }
+    catch (error) {
+        console.error("Fatal error in main():", error);
+        if (error instanceof Error) {
+            console.error("Error details:", error.message);
+            console.error("Stack trace:", error.stack);
+        }
+        process.exit(1);
+    }
 }
+// Add unhandled rejection handler
+process.on("unhandledRejection", (error) => {
+    console.error("Unhandled rejection:", error);
+    process.exit(1);
+});
 main().catch((error) => {
-    console.error("Fatal error in main():", error);
+    console.error("Fatal error:", error);
     process.exit(1);
 });

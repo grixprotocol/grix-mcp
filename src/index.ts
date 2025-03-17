@@ -124,14 +124,27 @@ server.tool(
 // Start the server
 async function main() {
 	try {
+
+
+		console.error("Initializing Grix MCP Server...");
 		const transport = new StdioServerTransport();
 		await server.connect(transport);
 		console.error("Grix MCP Server running on stdio");
 	} catch (error) {
 		console.error("Fatal error in main():", error);
+		if (error instanceof Error) {
+			console.error("Error details:", error.message);
+			console.error("Stack trace:", error.stack);
+		}
 		process.exit(1);
 	}
 }
+
+// Add unhandled rejection handler
+process.on("unhandledRejection", (error: unknown) => {
+	console.error("Unhandled rejection:", error);
+	process.exit(1);
+});
 
 main().catch((error) => {
 	console.error("Fatal error:", error);
