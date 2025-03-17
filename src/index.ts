@@ -45,6 +45,43 @@ const server = new McpServer({
 	version: "1.1.0",
 });
 
+// Sample hardcoded options data
+const SAMPLE_OPTIONS_DATA: OptionData[] = [
+	{
+		optionId: 1,
+		symbol: "BTC-30JUN23-30000-C",
+		type: "call",
+		expiry: "2023-06-30T08:00:00.000Z",
+		strike: 30000,
+		protocol: "deribit",
+		marketName: "BTC-30JUN23-30000-C",
+		contractPrice: 0.0534,
+		availableAmount: "1.5",
+	},
+	{
+		optionId: 2,
+		symbol: "BTC-30JUN23-35000-C",
+		type: "call",
+		expiry: "2023-06-30T08:00:00.000Z",
+		strike: 35000,
+		protocol: "derive",
+		marketName: "BTC-30JUN23-35000-C",
+		contractPrice: 0.0234,
+		availableAmount: "2.0",
+	},
+	{
+		optionId: 3,
+		symbol: "BTC-30JUN23-25000-P",
+		type: "put",
+		expiry: "2023-06-30T08:00:00.000Z",
+		strike: 25000,
+		protocol: "aevo",
+		marketName: "BTC-30JUN23-25000-P",
+		contractPrice: 0.0156,
+		availableAmount: "1.0",
+	},
+];
+
 // Options Tool
 server.tool(
 	"options",
@@ -54,37 +91,9 @@ server.tool(
 		optionType: z.enum(["call", "put"]).optional().default("call"),
 		positionType: z.enum(["long", "short"]).optional().default("long"),
 	},
-	async (request) => {
+	async () => {
 		try {
-			const asset = request.asset || "BTC";
-			const optionType = request.optionType || "call";
-			const positionType = request.positionType || "long";
-
-			if (shouldRefreshCache()) {
-				console.error(`📡 Fetching options data for asset: ${asset}`);
-
-				const response = await axios.get(`${API_BASE_URL}/elizatradeboard`, {
-					headers: {
-						"x-api-key": KEY_DEMO,
-					},
-					params: {
-						asset: asset.toUpperCase(),
-						optionType,
-						positionType,
-						protocols: DEFAULT_PROTOCOLS.join(","),
-					},
-				});
-
-				const optionsData = Array.isArray(response.data) ? response.data : [];
-				const sortedData = optionsData.sort((a, b) => a.strike - b.strike);
-
-				optionsCache = {
-					lastUpdate: Date.now(),
-					data: sortedData,
-				};
-			}
-
-			const formattedData = optionsCache.data?.map((option) => ({
+			const formattedData = SAMPLE_OPTIONS_DATA.map((option) => ({
 				id: option.optionId,
 				symbol: option.symbol,
 				type: option.type,
@@ -100,19 +109,18 @@ server.tool(
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify(formattedData || [], null, 2),
+						text: JSON.stringify(formattedData, null, 2),
 					},
 				],
 			};
 		} catch (error: unknown) {
 			const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-			console.error("Error fetching options data:", error);
 			return {
 				content: [
 					{
 						type: "text",
 						text: JSON.stringify({
-							error: "Failed to fetch options data",
+							error: "Failed to process options data",
 							details: errorMessage,
 						}),
 					},
