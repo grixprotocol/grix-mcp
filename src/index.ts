@@ -2,11 +2,16 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-
+import axios from "axios";
 import dotenv from "dotenv";
 
 // Load environment variables
 dotenv.config();
+
+const API_KEY_DEMO =  "gjOH22LyxtKxPax5ALRx46i5rHv9B8Ya1WnD0ma3";
+const BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev/elizatradeboard";
+const PROTOCOLS = "derive,aevo,premia,moby,ithaca,zomma,deribit";
+const CACHE_TTL = 30000; // 30 seconds cache
 
 // Type definitions
 interface OptionData {
@@ -24,10 +29,10 @@ interface OptionData {
 // Cache configuration
 let optionsCache: {
 	lastUpdate: number;
-	data: OptionData[] | null;
+	data: Record<string, OptionData[]>;
 } = {
 	lastUpdate: 0,
-	data: null,
+	data: {},
 };
 
 // Create the MCP server with the new Server class
@@ -43,42 +48,41 @@ const server = new Server(
 	}
 );
 
-// Sample hardcoded options data
-const SAMPLE_OPTIONS_DATA: OptionData[] = [
-	{
-		optionId: 1,
-		symbol: "BTC-30JUN23-30000-C",
-		type: "call",
-		expiry: "2023-06-30T08:00:00.000Z",
-		strike: 30000,
-		protocol: "deribit",
-		marketName: "BTC-30JUN23-30000-C",
-		contractPrice: 0.0534,
-		availableAmount: "1.5",
-	},
-	{
-		optionId: 2,
-		symbol: "BTC-30JUN23-35000-C",
-		type: "call",
-		expiry: "2023-06-30T08:00:00.000Z",
-		strike: 35000,
-		protocol: "derive",
-		marketName: "BTC-30JUN23-35000-C",
-		contractPrice: 0.0234,
-		availableAmount: "2.0",
-	},
-	{
-		optionId: 3,
-		symbol: "BTC-30JUN23-25000-P",
-		type: "put",
-		expiry: "2023-06-30T08:00:00.000Z",
-		strike: 25000,
-		protocol: "aevo",
-		marketName: "BTC-30JUN23-25000-P",
-		contractPrice: 0.0156,
-		availableAmount: "1.0",
-	},
-];
+async function fetchOptionsData(
+	asset: string,
+	optionType: string,
+	positionType: string
+): Promise<OptionData[]> {
+	const cacheKey = `${asset}-${optionType}-${positionType}`;
+	const now = Date.now();
+
+	// Return cached data if valid
+	if (optionsCache.data[cacheKey] && now - optionsCache.lastUpdate < CACHE_TTL) {
+		return optionsCache.data[cacheKey];
+	}
+
+	try {
+		const response = await axios.get(BASE_URL, {
+			params: {
+				asset,
+				optionType: optionType.toUpperCase(),
+				positionType: positionType.toLowerCase(),
+				protocols: PROTOCOLS,
+			},
+			headers: {
+				"x-api-key": API_KEY_DEMO,
+			},
+		});
+
+		const data = response.data;
+		optionsCache.lastUpdate = now;
+		optionsCache.data[cacheKey] = data;
+		return data;
+	} catch (error) {
+		console.error("Error fetching options data:", error);
+		throw new Error("Failed to fetch options data from API");
+	}
+}
 
 // Define tools using ListToolsRequestSchema
 server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -106,7 +110,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 	if (name === "options") {
 		try {
-			const formattedData = SAMPLE_OPTIONS_DATA.map((option) => ({
+			const asset = (args?.asset as string) || "BTC";
+			const optionType = (args?.optionType as string) || "call";
+			const positionType = (args?.positionType as string) || "long";
+
+			const data = await fetchOptionsData(asset, optionType, positionType);
+
+			const formattedData = data.map((option) => ({
 				id: option.optionId,
 				symbol: option.symbol,
 				type: option.type,
