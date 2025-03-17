@@ -79,9 +79,9 @@ async function fetchOptionsData(
 			);
 		}
 
-		const sortedData = response.data.sort(
-			(a: OptionData, b: OptionData) => a.strike - b.strike
-		);
+		const sortedData = response.data
+			.sort((a: OptionData, b: OptionData) => a.strike - b.strike)
+			.slice(0, 20);
 
 		optionsCache.lastUpdate = now;
 		optionsCache.data[cacheKey] = sortedData;

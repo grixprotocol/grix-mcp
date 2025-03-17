@@ -45,7 +45,9 @@ async function fetchOptionsData(asset, optionType, positionType) {
         if (!response.data || !Array.isArray(response.data)) {
             throw new Error(`Invalid API response format. Response: ${JSON.stringify(response.data)}`);
         }
-        const sortedData = response.data.sort((a, b) => a.strike - b.strike);
+        const sortedData = response.data
+            .sort((a, b) => a.strike - b.strike)
+            .slice(0, 20);
         optionsCache.lastUpdate = now;
         optionsCache.data[cacheKey] = sortedData;
         return sortedData;
