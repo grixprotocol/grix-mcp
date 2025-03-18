@@ -1,5 +1,6 @@
 import { z } from "zod";
-import axios from "axios";
+// import { GrixSDK, OptionType, PositionType, Underlyi ngAsset } from "@grixprotocol/sdk";
+import { GrixSDK, UnderlyingAsset, OptionType } from "@grixprotocol/sdk";
 // Request schemas
 export const OptionsRequestSchema = z.object({
     asset: z.enum(["BTC", "ETH"]).optional().default("BTC"),
@@ -10,7 +11,6 @@ export class GrixTools {
     constructor() {
         this.cacheExpiryMs = 5 * 60 * 1000; // 5 minutes
         this.apiKey = process.env.GRIX_API_KEY || "";
-        this.baseUrl = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev";
         this.defaultProtocols = ["derive", "aevo", "premia", "moby", "ithaca", "zomma", "deribit"];
         this.optionsCache = {
             lastUpdate: 0,
@@ -33,38 +33,36 @@ export class GrixTools {
             market: option.marketName,
         };
     }
-    async makeRequest(endpoint, params = {}) {
-        try {
-            const response = await axios.get(`${this.baseUrl}${endpoint}`, {
-                headers: {
-                    "x-api-key": this.apiKey,
-                },
-                params,
+    /**
+     * Initializes the SDK instance
+     */
+    async initializeSDK() {
+        if (!this.sdk) {
+            this.sdk = await GrixSDK.initialize({
+                apiKey: this.apiKey,
             });
-            return response.data;
-        }
-        catch (error) {
-            console.error("API request failed:", error);
-            throw error;
         }
     }
     /**
-     * Fetches options data from the Grix API
+     * Fetches options data from the Grix API using the SDK
      * @param request Options request parameters
      * @returns Formatted options data
      */
     async getOptionsData(request) {
         try {
+            await this.initializeSDK();
             if (this.shouldRefreshCache()) {
                 console.error(`📡 Fetching options data for asset: ${request.asset}`);
-                const optionsData = await this.makeRequest("/elizatradeboard", {
-                    asset: request.asset.toUpperCase(),
-                    optionType: request.optionType,
-                    positionType: request.positionType,
-                    protocols: this.defaultProtocols.join(","),
+                const asset = request.asset === "BTC" ? UnderlyingAsset.BTC : UnderlyingAsset.ETH;
+                const optionType = request.optionType === "call" ? OptionType.call : OptionType.put;
+                const positionType = request.positionType === "long" ? "long" : "short";
+                const optionsData = await this.sdk.getOptionsMarketBoard({
+                    asset: asset,
+                    optionType: optionType,
+                    positionType: positionType,
                 });
                 // Sort options by strike price
-                const sortedData = optionsData.sort((a, b) => a.strike - b.strike);
+                const sortedData = optionsData.results.sort((a, b) => a.strike - b.strike);
                 this.optionsCache = {
                     lastUpdate: Date.now(),
                     data: sortedData,
