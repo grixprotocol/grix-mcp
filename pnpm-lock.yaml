@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@grixprotocol/sdk':
-        specifier: ^1.2.9
-        version: 1.2.9(ws@8.18.1)
+        specifier: ^1.2.12
+        version: 1.2.12
       '@modelcontextprotocol/sdk':
         specifier: ^1.7.0
         version: 1.7.0
@@ -30,8 +30,8 @@ importers:
 
 packages:
 
-  '@grixprotocol/sdk@1.2.9':
-    resolution: {integrity: sha512-BNdJWZkbbSF5/mA1qMkl/HSqBdTNHIfqukuNytfwptzEZ4QdWQdNAOYzg+QA0ppw5jvKOcSJawvcLssfP+bnJQ==}
+  '@grixprotocol/sdk@1.2.12':
+    resolution: {integrity: sha512-YWr1Y7xp6rGXUl+X19mcNEyGdyejBtHKFZoz8EdQkNF56Cp+Q3x78pIxtxC5KoPQ8HZrnSBI51vp9NHQQcx63w==}
 
   '@modelcontextprotocol/sdk@1.7.0':
     resolution: {integrity: sha512-IYPe/FLpvF3IZrd/f5p5ffmWhMc3aEMuM2wGJASDqC2Ge7qatVCdbfPx3n/5xFeb19xN0j/911M2AaFuircsWA==}
@@ -482,18 +482,6 @@ packages:
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
 
-  ws@8.18.1:
-    resolution: {integrity: sha512-RKW2aJZMXeMxVpnZ6bck+RswznaxmzdULiBr6KY7XkTnW8uvt0iT9H5DkHUChXrc+uurzwa0rVI16n/Xzjdz1w==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   zod-to-json-schema@3.24.4:
     resolution: {integrity: sha512-0uNlcvgabyrni9Ag8Vghj21drk7+7tp7VTwwR7KxxXXc/3pbXz2PHlDgj3cICahgF1kHm4dExBFj7BXrZJXzig==}
     peerDependencies:
@@ -504,10 +492,10 @@ packages:
 
 snapshots:
 
-  '@grixprotocol/sdk@1.2.9(ws@8.18.1)':
+  '@grixprotocol/sdk@1.2.12':
     dependencies:
       axios: 1.8.3
-      openai: 4.87.3(ws@8.18.1)(zod@3.24.2)
+      openai: 4.87.3(zod@3.24.2)
       zod: 3.24.2
     transitivePeerDependencies:
       - debug
@@ -838,7 +826,7 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  openai@4.87.3(ws@8.18.1)(zod@3.24.2):
+  openai@4.87.3(zod@3.24.2):
     dependencies:
       '@types/node': 18.19.80
       '@types/node-fetch': 2.6.12
@@ -848,7 +836,6 @@ snapshots:
       formdata-node: 4.4.1
       node-fetch: 2.7.0
     optionalDependencies:
-      ws: 8.18.1
       zod: 3.24.2
     transitivePeerDependencies:
       - encoding
@@ -895,7 +882,7 @@ snapshots:
 
   send@1.1.0:
     dependencies:
-      debug: 4.4.0
+      debug: 4.3.6
       destroy: 1.2.0
       encodeurl: 2.0.0
       escape-html: 1.0.3
@@ -981,9 +968,6 @@ snapshots:
       webidl-conversions: 3.0.1
 
   wrappy@1.0.2: {}
-
-  ws@8.18.1:
-    optional: true
 
   zod-to-json-schema@3.24.4(zod@3.24.2):
     dependencies:

@@ -39,16 +39,10 @@ export class GrixTools {
      */
     async initializeSDK() {
         if (!this.sdk) {
-            try {
-                this.sdk = await GrixSDK.initialize({
-                    apiKey: this.apiKey,
-                    openAIApiKey: this.openAIApiKey,
-                });
-            }
-            catch (error) {
-                console.error("Failed to initialize GrixSDK:", error);
-                throw new Error(`SDK initialization failed: ${error instanceof Error ? error.message : String(error)}`);
-            }
+            this.sdk = await GrixSDK.initialize({
+                apiKey: this.apiKey,
+                openAIApiKey: this.openAIApiKey,
+            });
         }
     }
     /**
