@@ -6,6 +6,7 @@ import { GrixTools } from "./services/GrixTools.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { OptionType, PositionType, UnderlyingAsset } from "@grixprotocol/sdk";
 
+const GRIX_API_KEY_DEMO = "gjOH22LyxtKxPax5ALRx46i5rHv9B8Ya1WnD0ma3";
 // Load environment variables
 dotenv.config();
 
@@ -23,13 +24,8 @@ const server = new Server(
 );
 
 // Remove the fetchOptionsData function and optionsCache as they're handled by GrixTools now
-const grixApiKey = process.env.GRIX_API_KEY;
 
-if (!grixApiKey) {
-	throw new Error("GRIX_API_KEY is not set");
-}
-
-const grixTools = new GrixTools(grixApiKey);
+const grixTools = new GrixTools(GRIX_API_KEY_DEMO);
 
 // Define tools using ListToolsRequestSchema
 server.setRequestHandler(ListToolsRequestSchema, async () => {
