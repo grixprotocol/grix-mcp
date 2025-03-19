@@ -1,6 +1,6 @@
 {
 	"name": "@grixprotocol/grix-mcp",
-	"version": "0.0.18",
+	"version": "0.0.19",
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
