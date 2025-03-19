@@ -1,140 +1,226 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+#!/usr/bin/env node
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { z } from "zod";
-import axios from "axios";
 import dotenv from "dotenv";
+import { GrixTools } from "./services/GrixTools.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import { OptionType, PositionType, UnderlyingAsset } from "@grixprotocol/sdk";
 
 // Load environment variables
 dotenv.config();
 
-// API Configuration
-const API_BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev";
-const DEFAULT_PROTOCOLS = ["derive", "aevo", "premia", "moby", "ithaca", "zomma", "deribit"];
+// Create the MCP server with the new Server class
+const server = new Server(
+	{
+		name: "GRIX MCP",
+		version: "1.1.0",
+	},
+	{
+		capabilities: {
+			tools: {},
+		},
+	}
+);
 
-// Type definitions for API response
-interface OptionData {
-	optionId: number;
-	symbol: string;
-	type: string;
-	expiry: string;
-	strike: number;
-	protocol: string;
-	marketName: string;
-	contractPrice: number;
-	availableAmount: string;
+// Remove the fetchOptionsData function and optionsCache as they're handled by GrixTools now
+
+const GRIX_API_KEY = process.env.GRIX_API_KEY;
+
+if (!GRIX_API_KEY) {
+	throw new Error("GRIX_API_KEY is not set");
 }
 
-// Cache configuration
-const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
-let optionsCache: {
-	lastUpdate: number;
-	data: OptionData[] | null;
-} = {
-	lastUpdate: 0,
-	data: null,
-};
+const grixTools = new GrixTools(GRIX_API_KEY);
 
-function shouldRefreshCache(): boolean {
-	return Date.now() - optionsCache.lastUpdate > CACHE_EXPIRY_MS;
-}
-
-// Create server instance
-const server = new McpServer({
-	name: "grix-mcp",
-	version: "1.0.0",
+// Define tools using ListToolsRequestSchema
+server.setRequestHandler(ListToolsRequestSchema, async () => {
+	return {
+		tools: [
+			{
+				name: "options",
+				description: "Get options data from Grix",
+				inputSchema: {
+					type: "object",
+					properties: {
+						asset: { type: "string", enum: ["BTC", "ETH"], default: "BTC" },
+						optionType: { type: "string", enum: ["call", "put"], default: "call" },
+						positionType: { type: "string", enum: ["long", "short"], default: "long" },
+					},
+				},
+			},
+			{
+				name: "generateSignals",
+				description: "Generate trading signals based on user parameters",
+				inputSchema: {
+					type: "object",
+					properties: {
+						budget: { type: "string", default: "5000" },
+						assets: {
+							type: "array",
+							items: { type: "string", enum: ["BTC", "ETH"] },
+							default: ["BTC"],
+						},
+						userPrompt: {
+							type: "string",
+							default: "Generate moderate growth strategies",
+						},
+					},
+				},
+			},
+		],
+	};
 });
 
-// Register options tool with enhanced functionality
-server.tool(
-	"options",
-	"Get options data from Grix",
-	{
-		asset: z.enum(["BTC", "ETH"]).optional().default("BTC"),
-		optionType: z.enum(["call", "put"]).optional().default("call"),
-		positionType: z.enum(["long", "short"]).optional().default("long"),
-	},
-	async (request) => {
+// Handle tool calls using CallToolRequestSchema
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+	const { name, arguments: args } = request.params;
+
+	if (name === "options") {
 		try {
-			const asset = request.asset || "BTC";
-			const optionType = request.optionType || "call";
-			const positionType = request.positionType || "long";
+			const asset = (args?.asset as string) || "BTC";
+			const optionType = (args?.optionType as string) || "call";
+			const positionType = (args?.positionType as string) || "long";
 
-			// Fetch and cache options data if needed
-			if (shouldRefreshCache()) {
-				console.error(`📡 Fetching options data for asset: ${asset}`);
+			const data = await grixTools.getOptionsData({
+				asset: asset as UnderlyingAsset,
+				optionType: optionType as OptionType,
+				positionType: positionType as PositionType,
+			});
 
-				const response = await axios.get(`${API_BASE_URL}/elizatradeboard`, {
-					headers: {
-						"x-api-key": process.env.GRIX_API_KEY || "",
-					},
-					params: {
-						asset: asset.toUpperCase(),
-						optionType,
-						positionType,
-						protocols: DEFAULT_PROTOCOLS.join(","),
-					},
-				});
-
-				// Ensure the response data is an array
-				const optionsData = Array.isArray(response.data) ? response.data : [];
-
-				// Sort options by strike price for better readability
-				const sortedData = optionsData.sort((a, b) => a.strike - b.strike);
-
-				optionsCache = {
-					lastUpdate: Date.now(),
-					data: sortedData,
+			if (!data || data.length === 0) {
+				return {
+					content: [
+						{
+							type: "text",
+							text: "No options data available for the specified parameters.",
+						},
+					],
 				};
 			}
 
-			// Format the response for better readability
-			const formattedData = optionsCache.data?.map((option) => ({
-				id: option.optionId,
-				symbol: option.symbol,
-				type: option.type,
-				expiry: option.expiry,
-				strike: option.strike,
-				protocol: option.protocol,
-				price: option.contractPrice,
-				amount: option.availableAmount,
-				market: option.marketName,
-			}));
+			const formattedOutput = data
+				.map(
+					(option, index) =>
+						`Option ${index + 1}:\n` +
+						`  Symbol: ${option.symbol}\n` +
+						`  Strike: $${option.strike.toLocaleString()}\n` +
+						`  Type: ${option.type}\n` +
+						`  Expiry: ${new Date(option.expiry).toLocaleDateString()}\n` +
+						`  Protocol: ${option.protocol.toLowerCase()}\n` +
+						`  Price: ${option.price.toFixed(4)}\n` +
+						`  Amount: ${option.amount}\n` +
+						`  Market: ${option.market}\n`
+				)
+				.join("\n");
 
 			return {
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify(formattedData || [], null, 2),
+						text: formattedOutput,
 					},
 				],
 			};
 		} catch (error: unknown) {
-			const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-			console.error("Error fetching options data:", error);
 			return {
 				content: [
 					{
 						type: "text",
-						text: JSON.stringify({
-							error: "Failed to fetch options data",
-							details: errorMessage,
-						}),
+						text: error instanceof Error ? error.message : "Unknown error occurred",
+					},
+				],
+			};
+		}
+	} else if (name === "generateSignals") {
+		try {
+			const budget = (args?.budget as string) || "5000";
+			const assets = (args?.assets as string[]) || ["BTC"];
+			const userPrompt =
+				(args?.userPrompt as string) || "Generate moderate growth strategies";
+
+			console.error(
+				`Generating trading signals with budget: $${budget}, assets: ${assets.join(", ")}`
+			);
+
+			const signals = await grixTools.generateTradingSignals(budget, assets, userPrompt);
+
+			if (!signals || signals.length === 0) {
+				return {
+					content: [
+						{
+							type: "text",
+							text: "No trading signals were generated.",
+						},
+					],
+				};
+			}
+
+			const formattedOutput = signals
+				.map(
+					(signal, index) =>
+						`Signal ${index + 1}:\n` +
+						`  Action: ${signal.action_type}\n` +
+						`  Position: ${signal.position_type}\n` +
+						`  Instrument: ${signal.instrument}\n` +
+						`  Type: ${signal.instrument_type}\n` +
+						`  Size: ${signal.size}\n` +
+						`  Expected Price: $${signal.expected_instrument_price_usd}\n` +
+						`  Total Price: $${signal.expected_total_price_usd}\n` +
+						`  Reason: ${signal.reason}\n` +
+						`  Created: ${new Date(signal.created_at).toLocaleString()}\n`
+				)
+				.join("\n");
+
+			return {
+				content: [
+					{
+						type: "text",
+						text: formattedOutput,
+					},
+				],
+			};
+		} catch (error: unknown) {
+			return {
+				content: [
+					{
+						type: "text",
+						text:
+							error instanceof Error
+								? error.message
+								: "Unknown error occurred while generating signals",
 					},
 				],
 			};
 		}
 	}
-);
+
+	throw new Error(`Unknown tool: ${name}`);
+});
 
 // Start the server
 async function main() {
-	const transport = new StdioServerTransport();
-	await server.connect(transport);
-  
-	console.error("Grix MCP Server running on stdio");
+	try {
+		console.error("Initializing Grix MCP Server...");
+		const transport = new StdioServerTransport();
+		await server.connect(transport);
+		console.error("Grix MCP Server running on stdio");
+	} catch (error) {
+		console.error("Fatal error in main():", error);
+		if (error instanceof Error) {
+			console.error("Error details:", error.message);
+			console.error("Stack trace:", error.stack);
+		}
+		process.exit(1);
+	}
 }
 
+// Add unhandled rejection handler
+process.on("unhandledRejection", (error: unknown) => {
+	console.error("Unhandled rejection:", error);
+	process.exit(1);
+});
+
 main().catch((error) => {
-	console.error("Fatal error in main():", error);
+	console.error("Fatal error:", error);
 	process.exit(1);
 });

@@ -1,12 +1,11 @@
 {
 	"mcpServers": {
 		"grix-mcp": {
-			"command": "node",
+			"command": "npx",
+			"args": ["@grixprotocol/grix-mcp"],
 			"env": {
-				"GRIX_API_KEY": "your_grix_api_key_here",
-				"OPENAI_API_KEY": "your_openai_api_key_here"
-			},
-			"args": ["build/index.js"]
+				"GRIX_API_KEY": "your_api_key_here"
+			}
 		}
 	}
 }

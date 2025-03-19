@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import dotenv from "dotenv";
 import { GrixTools } from "./services/GrixTools.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 // Load environment variables
 dotenv.config();
+const API_KEY_DEMO = "gjOH22LyxtKxPax5ALRx46i5rHv9B8Ya1WnD0ma3";
+const BASE_URL = "https://z61hgkwkn8.execute-api.us-east-1.amazonaws.com/dev/elizatradeboard";
+const PROTOCOLS = "derive,aevo,premia,moby,ithaca,zomma,deribit";
+const CACHE_TTL = 30000; // 30 seconds cache
 // Create the MCP server with the new Server class
 const server = new Server({
     name: "GRIX MCP",
@@ -15,12 +19,11 @@ const server = new Server({
         tools: {},
     },
 });
-// Remove the fetchOptionsData function and optionsCache as they're handled by GrixTools now
-const GRIX_API_KEY = process.env.GRIX_API_KEY;
-if (!GRIX_API_KEY) {
-    throw new Error("GRIX_API_KEY is not set");
+if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not set");
 }
-const grixTools = new GrixTools(GRIX_API_KEY);
+// Remove the fetchOptionsData function and optionsCache as they're handled by GrixTools now
+const grixTools = new GrixTools(API_KEY_DEMO, process.env.OPENAI_API_KEY);
 // Define tools using ListToolsRequestSchema
 server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
@@ -34,25 +37,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                         asset: { type: "string", enum: ["BTC", "ETH"], default: "BTC" },
                         optionType: { type: "string", enum: ["call", "put"], default: "call" },
                         positionType: { type: "string", enum: ["long", "short"], default: "long" },
-                    },
-                },
-            },
-            {
-                name: "generateSignals",
-                description: "Generate trading signals based on user parameters",
-                inputSchema: {
-                    type: "object",
-                    properties: {
-                        budget: { type: "string", default: "5000" },
-                        assets: {
-                            type: "array",
-                            items: { type: "string", enum: ["BTC", "ETH"] },
-                            default: ["BTC"],
-                        },
-                        userPrompt: {
-                            type: "string",
-                            default: "Generate moderate growth strategies",
-                        },
                     },
                 },
             },
@@ -108,57 +92,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
                     {
                         type: "text",
                         text: error instanceof Error ? error.message : "Unknown error occurred",
-                    },
-                ],
-            };
-        }
-    }
-    else if (name === "generateSignals") {
-        try {
-            const budget = args?.budget || "5000";
-            const assets = args?.assets || ["BTC"];
-            const userPrompt = args?.userPrompt || "Generate moderate growth strategies";
-            console.error(`Generating trading signals with budget: $${budget}, assets: ${assets.join(", ")}`);
-            const signals = await grixTools.generateTradingSignals(budget, assets, userPrompt);
-            if (!signals || signals.length === 0) {
-                return {
-                    content: [
-                        {
-                            type: "text",
-                            text: "No trading signals were generated.",
-                        },
-                    ],
-                };
-            }
-            const formattedOutput = signals
-                .map((signal, index) => `Signal ${index + 1}:\n` +
-                `  Action: ${signal.action_type}\n` +
-                `  Position: ${signal.position_type}\n` +
-                `  Instrument: ${signal.instrument}\n` +
-                `  Type: ${signal.instrument_type}\n` +
-                `  Size: ${signal.size}\n` +
-                `  Expected Price: $${signal.expected_instrument_price_usd}\n` +
-                `  Total Price: $${signal.expected_total_price_usd}\n` +
-                `  Reason: ${signal.reason}\n` +
-                `  Created: ${new Date(signal.created_at).toLocaleString()}\n`)
-                .join("\n");
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: formattedOutput,
-                    },
-                ],
-            };
-        }
-        catch (error) {
-            return {
-                content: [
-                    {
-                        type: "text",
-                        text: error instanceof Error
-                            ? error.message
-                            : "Unknown error occurred while generating signals",
                     },
                 ],
             };
