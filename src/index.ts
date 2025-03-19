@@ -6,10 +6,8 @@ import { GrixTools } from "./services/GrixTools.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { OptionType, PositionType, UnderlyingAsset } from "@grixprotocol/sdk";
 
-// Load environment variables
 dotenv.config();
 
-// Create the MCP server with the new Server class
 const server = new Server(
 	{
 		name: "GRIX MCP",
@@ -22,17 +20,10 @@ const server = new Server(
 	}
 );
 
-// Remove the fetchOptionsData function and optionsCache as they're handled by GrixTools now
-
 const GRIX_API_KEY = process.env.GRIX_API_KEY;
 
-if (!GRIX_API_KEY) {
-	throw new Error("GRIX_API_KEY is not set");
-}
+const grixTools = new GrixTools(GRIX_API_KEY || "");
 
-const grixTools = new GrixTools(GRIX_API_KEY);
-
-// Define tools using ListToolsRequestSchema
 server.setRequestHandler(ListToolsRequestSchema, async () => {
 	return {
 		tools: [
@@ -71,7 +62,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 	};
 });
 
-// Handle tool calls using CallToolRequestSchema
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	const { name, arguments: args } = request.params;
 
@@ -214,7 +204,6 @@ async function main() {
 	}
 }
 
-// Add unhandled rejection handler
 process.on("unhandledRejection", (error: unknown) => {
 	console.error("Unhandled rejection:", error);
 	process.exit(1);
