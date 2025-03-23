@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@grixprotocol/sdk':
-        specifier: ^1.2.24
-        version: 1.2.24
+        specifier: ^1.2.28
+        version: 1.2.28
       '@modelcontextprotocol/sdk':
         specifier: ^1.7.0
         version: 1.7.0
@@ -30,8 +30,8 @@ importers:
 
 packages:
 
-  '@grixprotocol/sdk@1.2.24':
-    resolution: {integrity: sha512-ugIw6KUhRnXbYU1g7BEnHsicXWlAmd4F+nTCv1PTBXeGUUJu08umzn43O4EaOdjRKQq2OBoH3KC2ufdfalwc5Q==}
+  '@grixprotocol/sdk@1.2.28':
+    resolution: {integrity: sha512-LqcbtDmtG4CLyR9qqE/AhhZxn0bRiqm4I5uVUfmpiTGl7zBDYDwCv9n5o6+WF2BMukROftVl4PCQCx0Gtme7RA==}
 
   '@modelcontextprotocol/sdk@1.7.0':
     resolution: {integrity: sha512-IYPe/FLpvF3IZrd/f5p5ffmWhMc3aEMuM2wGJASDqC2Ge7qatVCdbfPx3n/5xFeb19xN0j/911M2AaFuircsWA==}
@@ -40,8 +40,8 @@ packages:
   '@types/node-fetch@2.6.12':
     resolution: {integrity: sha512-8nneRWKCg3rMtF69nLQJnOYUcbafYeFSjqkw3jCRLsqkWFlHaoQrr5mXmofFGOx3DKn7UfmBMyov8ySvLRVldA==}
 
-  '@types/node@18.19.80':
-    resolution: {integrity: sha512-kEWeMwMeIvxYkeg1gTc01awpwLbfMRZXdIhwRcakd/KlK53jmRC26LqcbIt7fnAQTu5GzlnWmzA3H6+l1u6xxQ==}
+  '@types/node@18.19.81':
+    resolution: {integrity: sha512-7KO9oZ2//ivtSsryp0LQUqq79zyGXzwq1WqfywpC9ucjY7YyltMMmxWgtRFRKCxwa7VPxVBVy4kHf5UC1E8Lug==}
 
   '@types/node@22.13.10':
     resolution: {integrity: sha512-I6LPUvlRH+O6VRUqYOcMudhaIdUVWfsjnZavnsraHvpBwaEyMN29ry+0UVJhImYL16xsscu0aske3yA+uPOWfw==}
@@ -352,8 +352,8 @@ packages:
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
 
-  openai@4.88.0:
-    resolution: {integrity: sha512-Ll2ZJCdX/56WcCF/wLtAFou+zWRyLeneoXy+qya5T5/wm5LkIr6heJfSn53c5ujXWPB+24cgumiOetbFqcppFA==}
+  openai@4.89.0:
+    resolution: {integrity: sha512-XNI0q2l8/Os6jmojxaID5EhyQjxZgzR2gWcpEjYWK5hGKwE7AcifxEY7UNwFDDHJQXqeiosQ0CJwQN+rvnwdjA==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -492,10 +492,10 @@ packages:
 
 snapshots:
 
-  '@grixprotocol/sdk@1.2.24':
+  '@grixprotocol/sdk@1.2.28':
     dependencies:
       axios: 1.8.4
-      openai: 4.88.0(zod@3.24.2)
+      openai: 4.89.0(zod@3.24.2)
       zod: 3.24.2
     transitivePeerDependencies:
       - debug
@@ -521,7 +521,7 @@ snapshots:
       '@types/node': 22.13.10
       form-data: 4.0.2
 
-  '@types/node@18.19.80':
+  '@types/node@18.19.81':
     dependencies:
       undici-types: 5.26.5
 
@@ -826,9 +826,9 @@ snapshots:
     dependencies:
       wrappy: 1.0.2
 
-  openai@4.88.0(zod@3.24.2):
+  openai@4.89.0(zod@3.24.2):
     dependencies:
-      '@types/node': 18.19.80
+      '@types/node': 18.19.81
       '@types/node-fetch': 2.6.12
       abort-controller: 3.0.0
       agentkeepalive: 4.6.0

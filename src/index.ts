@@ -25,7 +25,7 @@ const grixSDK = await GrixSDK.initialize({
 	apiKey: GRIX_API_KEY || "",
 });
 
-const { schemas, getOptionsDataMcp, getSignalsDataMcp } = grixSDK.mcp;
+const { schemas, handleOperation } = grixSDK.mcp;
 
 const allSchemas = schemas.map((schema) => schema.schema);
 
@@ -37,34 +37,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	const { name, arguments: args } = request.params;
-
-	if (name === "options") {
-		if (!args) {
-			throw new Error("Missing required parameters: asset, optionType, or positionType");
-		}
-		try {
-			return await getOptionsDataMcp(args);
-		} catch (error) {
-			const err = error as Error;
-			return {
-				content: [
-					{
-						type: "text",
-						text: `Failed to fetch options data. Error: ${
-							err.message
-						}. Args: ${JSON.stringify(args)}`,
-					},
-				],
-			};
-		}
-	} else if (name === "generateSignals") {
-		if (!args) {
-			throw new Error("generateSignals: Missing required parameters");
-		}
-		return await getSignalsDataMcp(args);
-	}
-
-	throw new Error(`Unknown tool: ${name}`);
+	return await handleOperation(name, args);
 });
 
 // Start the server
