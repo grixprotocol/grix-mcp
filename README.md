@@ -21,15 +21,8 @@ Before you begin, ensure you have:
 
     - Visit [https://app.grix.finance/api](https://app.grix.finance/api)
     - Generate your API key
-
-2. Configure your environment:
-
-    ```bash
-    # Create a .env file
-    echo "GRIX_API_KEY=your_api_key_here" > .env
-    ```
-
-3. Set up MCP configuration:
+ 
+2. Set up MCP configuration:
    Create or update your `~/.cursor/mcp.json`:
     ```json
     {
