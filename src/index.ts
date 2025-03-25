@@ -37,11 +37,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	const { name, arguments: args } = request.params;
-	const response = await handleOperation(name, args);
-	
-	return {
-		result: response
-	};
+	return await handleOperation(name, args);
 });
 
 // Start the server
