@@ -38,6 +38,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
 	const { name, arguments: args } = request.params;
 	const response = await handleOperation(name, args);
+	
 	return {
 		result: response
 	};
@@ -49,18 +50,20 @@ async function main() {
 		console.error("Initializing Grix MCP Server...");
 		const transport = new StdioServerTransport();
 		await server.connect(transport);
+		console.log("Server:", server);
 		console.error("Grix MCP Server running on stdio");
 
-		 const response = await handleOperation("options", {
+	/*
+		const response = await handleOperation("options", {
 		 	asset: "BTC",
 		 	optionType: "call",
 		 	positionType: "long",
 		 });
 
-		//const response = await handleOperation("getPerpsPredictedFundings", {
-	//		protocol: "hyperliquid",
-	//	});
-		console.error("Response:", response);
+		const response = await handleOperation("getPerpsPredictedFundings", {
+			protocol: "hyperliquid",
+		});
+		console.error("Response:", response);*/
 	} catch (error) {
 		console.error("Fatal error in main():", error);
 		if (error instanceof Error) {
