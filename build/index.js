@@ -36,17 +36,6 @@ async function main() {
         await server.connect(transport);
         console.log("Server:", server);
         console.error("Grix MCP Server running on stdio");
-        /*
-            const response = await handleOperation("options", {
-                asset: "BTC",
-                optionType: "call",
-                positionType: "long",
-             });
-    
-            const response = await handleOperation("getPerpsPredictedFundings", {
-                protocol: "hyperliquid",
-            });
-            console.error("Response:", response);*/
     }
     catch (error) {
         console.error("Fatal error in main():", error);
