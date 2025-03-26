@@ -28,8 +28,8 @@ Before you begin, ensure you have:
     {
     	"mcpServers": {
     		"GRIX": {
-    			"command": "npm",
-    			"args": ["x", "@grixprotocol/grix-mcp"],
+    			"command": "npm",	
+    			"args": ["x", "@grixprotocol/grix_mcp"],
     			"env": {
     				"GRIX_API_KEY": "your_api_key_here"
     			}
