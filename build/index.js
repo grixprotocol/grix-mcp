@@ -36,6 +36,14 @@ async function main() {
         await server.connect(transport);
         console.log("Server:", server);
         console.error("Grix MCP Server running on stdio");
+        //const result = await grixSDK.mcp.handleOperation("getPowerTradeTradableEntities", {});
+        //console.log("result ->", result);
+        //const result2 = await grixSDK.mcp.handleOperation("getPowerTradeCurrenciesTradingStatistics", {});
+        //console.log("result2 ->", result2);	
+        //const result3 = await grixSDK.mcp.handleOperation("getPowerTradeExpiriesPerSymbol", {symbol: "BTC"});
+        //console.log("result3 ->", result3);
+        const result4 = await grixSDK.mcp.handleOperation("getPowerTradeStrikesPerSymbol", { symbol: "BTC" });
+        console.log("result4 ->", result4);
     }
     catch (error) {
         console.error("Fatal error in main():", error);
