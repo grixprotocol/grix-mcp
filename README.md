@@ -24,6 +24,8 @@ Before you begin, ensure you have:
  
 2. Set up MCP configuration:
    Create or update your `~/.cursor/mcp.json`:
+   
+   Using npm:
     ```json
     {
     	"mcpServers": {
@@ -37,18 +39,47 @@ Before you begin, ensure you have:
     	}
     }
     ```
+    
+   Using pnpm:
+    ```json
+    {
+    	"mcpServers": {
+    		"GRIX": {
+    			"command": "pnpm",	
+    			"args": ["dlx", "@grixprotocol/grix_mcp"],
+    			"env": {
+    				"GRIX_API_KEY": "your_api_key_here"
+    			}
+    		}
+    	}
+    }
+    ```
 
 ## Usage
 
-Once configured, you can use Grix MCP to:
+Once configured, you'll have seamless access to all methods provided by the [Grix Protocol SDK](https://github.com/grixprotocol/sdk) through the MCP interface. This means you can directly use:
 
--   Fetch real-time options data
--   Generate trading signals
+### Available SDK Methods
 
-### Available Operations
+#### Asset and Option Price Methods
+- Fetch real-time asset prices
+- Get option price information
+- Retrieve asset and option price history
 
--   `options`: Get options data for specific assets
--   `generateSignals`: Generate AI-powered trading signals based on user parameters
+#### Market Analysis Methods
+- Generate AI-powered trading signals
+- Analyze market data for insights
+- Access DeFi protocol data (Hyperliquid, etc.)
+
+#### Example Queries
+- "Get current BTC price"
+- "Show me option data for BTC calls"
+- "Generate moderate growth trading strategies with a $5000 budget"
+- "What are the predicted funding rates for Hyperliquid?"
+
+All functionality from the Grix SDK repository is available through this MCP interface without requiring additional configuration.
+
+> **Note:** The Grix SDK is continuously evolving with new features and capabilities being added regularly. The examples above represent just a sample of the available functionality. For the most up-to-date capabilities, refer to the [SDK repository](https://github.com/grixprotocol/sdk) or simply ask what's possible through the MCP interface.
 
 ## Support
 
