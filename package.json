@@ -18,6 +18,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.782.0",
 		"@grixprotocol/sdk": "^1.2.42",
 		"@modelcontextprotocol/sdk": "^1.7.0",
 		"axios": "^1.6.7",
