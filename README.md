@@ -2,6 +2,8 @@
 
 Grix is a powerful Derivatives Toolkits Marketplace designed for Agentic Trading, providing real-time options pricing data from various protocols and enabling the creation of sophisticated trading signals through AI agents.
 
+![Grix MCP Demo](grix-mcp.gif)
+
 ## Features
 
 -   Real-time options pricing data
