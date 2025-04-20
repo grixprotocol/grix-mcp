@@ -6,9 +6,14 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   GetPromptRequestSchema,
+  ListPromptsRequestSchema,
+  ReadResourceRequestSchema,
+  ListResourcesRequestSchema,
+  ListResourceTemplatesRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { GrixSDK } from "@grixprotocol/sdk";
 import { z } from "zod";
+import { prompts, promptHandlers } from "./utils/prompts.js";
 
 dotenv.config();
 
@@ -21,6 +26,7 @@ const server = new Server(
     capabilities: {
       tools: {},
       prompts: {},
+      resources: {},
     },
   }
 );
@@ -44,6 +50,78 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   return await handleOperation(name, args);
+});
+
+server.setRequestHandler(ListPromptsRequestSchema, () => ({
+  prompts: Object.values(prompts),
+}));
+server.setRequestHandler(GetPromptRequestSchema, (request) => {
+  const { name, arguments: args } = request.params;
+  const promptHandler = promptHandlers[name as keyof typeof promptHandlers];
+  if (promptHandler) return promptHandler(args as { name: string, style?: string });
+  throw new Error("Prompt not found");
+});
+
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: "hello://world",
+        name: "Hello World Message",
+        description: "A simple greeting message",
+        mimeType: "text/plain",
+      },
+    ],
+  };
+});
+// Return resource content when clients request it
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  if (request.params.uri === "hello://world") {
+    return {
+      contents: [
+        {
+          uri: "hello://world",
+          text: "Hello, World! This is my first MCP resource.",
+        },
+      ],
+    };
+  }
+  const greetingExp = /^greetings:\/\/(.+)$/;
+  const greetingMatch = request.params.uri.match(greetingExp);
+  if (greetingMatch) {
+    const name = decodeURIComponent(greetingMatch[1]);
+    return {
+        contents: [
+        {
+            uri: request.params.uri,
+            text: `Hello, ${name}! Welcome to MCP.`,
+        },
+      ],
+    };
+  }
+  throw new Error("Resource not found");
+}); 
+
+server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
+  resourceTemplates: [
+    {
+      greetings: {
+        uriTemplate: 'greetings://{name}',
+        name: 'Personal Greeting',
+        description: 'A personalized greeting message',
+        mimeType: 'text/plain',
+      },
+    },
+  ],
+}));
+
+/*
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: allSchemas.map((schema) => ({
+      name: schema.name,
+    })),
+  };
 });
 
 // Add prompt handler for market analysis
@@ -80,15 +158,15 @@ Provide a comprehensive analysis with actionable insights.`,
   }
   throw new Error("Unknown prompt");
 });
-
+*/
 // Start the server
 async function main() {
   try {
-    console.error("Initializing Grix MCP Server...");
+ //   console.error("Initializing Grix MCP Server...");
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.log("Server:", server);
-    console.error("Grix MCP Server running on stdio");
+   // console.log("Server:", server);
+   // console.error("Grix MCP Server running on stdio");
   } catch (error) {
     console.error("Fatal error in main():", error);
     if (error instanceof Error) {
