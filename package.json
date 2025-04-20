@@ -1,13 +1,14 @@
 {
 	"name": "@grixprotocol/grix_mcp",
-	"version": "0.0.36",
+	"version": "0.0.37",
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
 		"build": "tsc",
 		"start": "tsc && node build/index.js",
 		"dev": "ts-node-esm src/index.ts",
-		"clean": "rm -rf build"
+		"clean": "rm -rf build",
+		"inspector": "tsc && npx @modelcontextprotocol/inspector node build/index.js"
 	},
 	"keywords": [],
 	"author": "",
@@ -18,7 +19,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@grixprotocol/sdk": "^1.2.45",
+		"@grixprotocol/sdk": "^1.2.49",
 		"@modelcontextprotocol/sdk": "^1.7.0",
 		"axios": "^1.6.7",
 		"dotenv": "^16.4.7",
