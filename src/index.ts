@@ -24,6 +24,7 @@ const GRIX_API_KEY = process.env.GRIX_API_KEY;
 
 const grixSDK = await GrixSDK.initialize({
 	apiKey: GRIX_API_KEY || "",
+  isMcpServerNeeded: true
 });
 
 const { schemas, handleOperation } = grixSDK.mcp;
@@ -47,7 +48,7 @@ async function main() {
 		console.error("Initializing Grix MCP Server...");
 		const transport = new StdioServerTransport();
 		await server.connect(transport);
-		console.log("Server:", server);
+		console.error("Server:", server);
 		console.error("Grix MCP Server running on stdio");
 	} catch (error) {
 		console.error("Fatal error in main():", error);
