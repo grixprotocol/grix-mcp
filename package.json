@@ -1,6 +1,6 @@
 {
 	"name": "@grixprotocol/grix_mcp",
-	"version": "0.0.38",
+	"version": "0.0.39",
 	"type": "module",
 	"main": "build/index.js",
 	"scripts": {
@@ -19,7 +19,7 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@grixprotocol/sdk": "^1.2.50",
+		"@grixprotocol/sdk": "^1.2.52",
 		"@modelcontextprotocol/sdk": "^1.7.0",
 		"axios": "^1.6.7",
 		"dotenv": "^16.4.7",

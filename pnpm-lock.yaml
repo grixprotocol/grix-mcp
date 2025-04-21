@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@grixprotocol/sdk':
-        specifier: ^1.2.50
-        version: 1.2.50
+        specifier: ^1.2.52
+        version: 1.2.52
       '@modelcontextprotocol/sdk':
         specifier: ^1.7.0
         version: 1.10.1
@@ -40,8 +40,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@grixprotocol/sdk@1.2.50':
-    resolution: {integrity: sha512-p67lyEJcsOFs/Ncy3IcxyK5muc0lOH3pMMfggF8qcfdSysrF5iDFYXub9UjhZIHYiD40NpmbpU7unH6tXY88dg==}
+  '@grixprotocol/sdk@1.2.52':
+    resolution: {integrity: sha512-Buh5GJGiVier92G3PAFnZOIBkVggRYBnyVS+FeyWzyZeirWu2qXLxpE62gqQUx4fymIx8iykt5U9Eeu7xpeoAw==}
 
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
@@ -565,7 +565,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@grixprotocol/sdk@1.2.50':
+  '@grixprotocol/sdk@1.2.52':
     dependencies:
       axios: 1.8.4
       openai: 4.95.1(zod@3.24.3)
